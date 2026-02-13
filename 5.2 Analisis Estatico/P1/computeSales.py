@@ -11,7 +11,7 @@ import time
 def load_json_file(filename):
     """
     Loads a JSON file and returns the data.
-    Handles FileNotFoundError and JSONDecodeError.
+    Handles specific I/O and JSON errors to satisfy Pylint.
     """
     try:
         with open(filename, 'r', encoding='utf-8') as file:
@@ -22,8 +22,8 @@ def load_json_file(filename):
     except json.JSONDecodeError:
         print(f"Error: The file '{filename}' contains invalid JSON.")
         return None
-    except Exception as e:
-        print(f"Error: An unexpected error occurred reading '{filename}': {e}")
+    except OSError as e:
+        print(f"Error: OS error occurred reading '{filename}': {e}")
         return None
 
 
@@ -40,12 +40,12 @@ def build_price_map(catalogue_data):
     for item in catalogue_data:
         title = item.get("title")
         price = item.get("price")
-        
+
         if title is not None and isinstance(price, (int, float)):
             price_map[title] = price
         else:
             print(f"Warning: Skipped invalid item in catalogue: {item}")
-    
+
     return price_map
 
 
@@ -55,7 +55,7 @@ def compute_total_cost(price_map, sales_data):
     Handles missing products or invalid quantities gracefully.
     """
     total_cost = 0.0
-    
+
     if not isinstance(sales_data, list):
         print("Error: Invalid sales format. Expected a list of sales.")
         return 0.0
@@ -68,7 +68,7 @@ def compute_total_cost(price_map, sales_data):
         if product not in price_map:
             print(f"Error: Product '{product}' not found in price catalogue.")
             continue
-        
+
         if not isinstance(quantity, (int, float)):
             print(f"Error: Invalid quantity for product '{product}'.")
             continue
@@ -104,10 +104,10 @@ def main():
     # 3. Process Data
     # Convert list to dict for performance
     price_map = build_price_map(catalogue_data)
-    
+
     # Calculate Total
     total_cost = compute_total_cost(price_map, sales_data)
-    
+
     # 4. Final Timing and Output
     end_time = time.time()
     elapsed_time = end_time - start_time
@@ -129,7 +129,7 @@ def main():
     try:
         with open("SalesResults.txt", "w", encoding='utf-8') as f:
             f.write(output_string)
-    except Exception as e:
+    except OSError as e:
         print(f"Error writing to results file: {e}")
 
 

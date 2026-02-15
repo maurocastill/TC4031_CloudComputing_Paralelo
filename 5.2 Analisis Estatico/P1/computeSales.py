@@ -1,7 +1,7 @@
 """
 computeSales.py
-A tool to calculate total sales cost from a product catalogue and sales records.
-""" #pylint: disable=invalid-name
+Tool to calculate total sales cost from a product catalogue and sales records.
+"""  # pylint: disable=invalid-name
 
 import json
 import sys
@@ -52,13 +52,16 @@ def build_price_map(catalogue_data):
 def compute_total_cost(price_map, sales_data):
     """
     Iterates through sales records and calculates total cost.
-    Handles missing products or invalid quantities gracefully.
+    Returns: tuple (total_cost, error_list)
     """
     total_cost = 0.0
+    errors = []
 
     if not isinstance(sales_data, list):
-        print("Error: Invalid sales format. Expected a list of sales.")
-        return 0.0
+        msg = "Error: Invalid sales format. Expected a list of sales."
+        print(msg)
+        errors.append(msg)
+        return 0.0, errors
 
     for sale in sales_data:
         product = sale.get("Product")
@@ -66,17 +69,20 @@ def compute_total_cost(price_map, sales_data):
 
         # Validation: Check if product exists and quantity is a number
         if product not in price_map:
-            print(f"Error: Product '{product}' not found in price catalogue.")
+            msg = f"Error: Product '{product}' not found in price catalogue."
+            errors.append(msg)
             continue
 
         if not isinstance(quantity, (int, float)):
-            print(f"Error: Invalid quantity for product '{product}'.")
+            msg = f"Error: Invalid quantity for product '{product}'."
+            print(msg)
+            errors.append(msg)
             continue
 
         item_price = price_map[product]
         total_cost += item_price * quantity
 
-    return total_cost
+    return total_cost, errors
 
 
 def main():
@@ -88,7 +94,8 @@ def main():
 
     # 1. Validation: Check command line arguments
     if len(sys.argv) != 3:
-        print("Usage: python computeSales.py priceCatalogue.json salesRecord.json")
+        print("Usage: python computeSales.py priceCatalogue.json "
+              "salesRecord.json")
         sys.exit(1)
 
     price_file = sys.argv[1]
@@ -102,11 +109,10 @@ def main():
         sys.exit(1)
 
     # 3. Process Data
-    # Convert list to dict for performance
     price_map = build_price_map(catalogue_data)
 
-    # Calculate Total
-    total_cost = compute_total_cost(price_map, sales_data)
+    # Calculate Total and catch errors
+    total_cost, error_log = compute_total_cost(price_map, sales_data)
 
     # 4. Final Timing and Output
     end_time = time.time()
@@ -120,14 +126,22 @@ def main():
         f"Execution Time: {elapsed_time:.6f} seconds",
         "-" * 30
     ]
+
+    # Append errors to the output if any exist
+    if error_log:
+        result_lines.append("\nErrors detected during processing:")
+        result_lines.extend(error_log)
+        result_lines.append("-" * 30)
+
     output_string = "\n".join(result_lines)
 
-    # Print to Console
+    # Print summary (errors already printed during processing) to Console
+    # Note: We print output_string again so the summary appears at the end
     print(output_string)
 
     # Write to File
     try:
-        with open("SalesResults.txt", "w", encoding='utf-8') as f:
+        with open("results/SalesResults.txt", "w", encoding='utf-8') as f:
             f.write(output_string)
     except OSError as e:
         print(f"Error writing to results file: {e}")

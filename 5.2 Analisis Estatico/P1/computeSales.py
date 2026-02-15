@@ -135,8 +135,6 @@ def main():
 
     output_string = "\n".join(result_lines)
 
-    # Print summary (errors already printed during processing) to Console
-    # Note: We print output_string again so the summary appears at the end
     print(output_string)
 
     # Write to File
